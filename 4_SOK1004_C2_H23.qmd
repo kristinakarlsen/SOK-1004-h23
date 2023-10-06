@@ -1,0 +1,254 @@
+---
+title: "Case 2"
+format: pdf
+editor: visual
+---
+
+
+## Instruksjoner
+
+Denne oppgaven er laget av Even S. Hvinden og oppdatert av Derek J. Clark. Sistnevnte er ansvarlig for eventuelle feil og mangler.
+
+Oppgaven skal løses interaktivt i RStudio ved å legge inn egen kode og kommentarer. Det ferdige dokumentet lagres med kandidatnummeret som navn `[kandidatnummer]_SOK1004_C2_H23.qmd` og lastes opp på deres GitHub-side. Hvis du har kandidatnummer 43, så vil filen hete `43_SOK1004_C2_H23.qmd`. Påse at koden kjører og at dere kan eksportere besvarelsen til pdf. Lever så lenken til GitHub-repositoriumet i Canvas.
+
+## Bakgrunn
+
+Økonomisk vekst gir økt kjøpekraft og velferd. Økningen i økonomisk aktivitet har hittil blitt muliggjort gjennom å utnytte fossile energikilder som kull, olje og gass. Forbrenningen av hydrokarboner har over tid økt mengden CO2 i atmosfæren og forårsaket endringer i klimaet. Klimaendringene medfører en rekke kostnader, blant andre hyppigere og mer intense innslag av ekstreme værforhold. I den grad veksten drives av fossile energikilder er det ikke opplagt at høyere økonomisk aktivitet vil øke menneskelig velferd på sikt. Vi står ovenfor en avveining mellom økt kjøpekraft og klimaendringer.
+
+I denne oppgaven skal vi utforske avveiningen mellom kjøpekraft og klimaendringer ved å studere sammenhengen mellom CO2-utslipp og bruttonasjonalprodukt (BNP) på tvers av land. Data henter vi fra [OWID](https://ourworldindata.org/co2-emissions). En beskrivelse av dataene (kodebok) finnes [her](https://github.com/owid/co2-data/blob/master/owid-co2-codebook.csv).
+
+Vi skal utforske følgende: Hvilke land har høyest CO2 utslipp? Hvordan kan utslippene sammenlignes når vi tar hensyn til befolkningen og størrelsen på økonomiene? Kan bruken av kull til energiproduksjon forklare forskjellen mellom land? Hvordan stiller utslippene seg når vi justerer for internasjonal handel og skiller mellom produksjon og forbruk?
+
+**Merknad.** I oppgaven definerer jeg variabler matematisk og ber dere lage figurer av de. Alle variablene finnes i datasettet. En del av oppgaven er å finne de.
+
+## Last inn pakker
+
+```{r}
+rm(list=ls())
+library(tidyverse)
+```
+
+## Last ned data
+
+```{r}
+url <- 
+  "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv"
+
+df <- url %>%
+  read_csv()
+```
+
+## I. Karbonintensitet i produksjon
+
+Vi skal studere sammenhengen mellom BNP og CO2 for de fem største økonomiene i verden, målt ved kjøpekraftjustert BNP. Disse landene er:
+
+```{r}
+list <- c("China", "United States", "India", "Japan", "Germany")
+```
+
+Betrakt følgende figur:
+
+```{r}
+df %>%
+  
+  mutate(gdp = gdp/10^12) %>%
+
+  mutate(co2 = co2/10^3) %>%
+
+  filter(country %in% list) %>% 
+  
+  ggplot(aes(x=gdp, y=co2, color = country)) %>%
+  
+  + geom_point() %>%
+  
+  + geom_smooth(se = FALSE) %>%
+  
+  + labs(y = "CO2", x = "GDP", title = "Figur 1: GDP vs CO2", subtitle = "Production-based C02 emissions, billions of tons. 
+GDP in trillions of USD, constant 2011 prices at purchasing power parity. 1850-2021.", color = "Country") %>%
+  
+  + theme_bw()
+```
+
+Kommandoen `geom_smooth()` bruker en såkalt lokal regresjon til å tegne en kurve gjennom datapunktene. Dere kan tenke på dette som en gjennomsnittlig sammenheng, eller at man har tegnet en strek gjennom datapunktene med en penn.
+
+### Oppgave Ia
+
+Gi en fullstendig og nøyaktig beskrivelse av figuren. Tolk helningen på linjene og diskuter variasjon mellom og innad i landene. Drøft hvilke forhold figuren illustrerer på en god måte og hvilken informasjon som er vanskelig å tolke.
+
+*\[Figur 1 viser forholdet mellom produksjonsbasert co2-utslipp og BNP, for verdens fem største økonomier i perioden 1850-2021. Den vertikale aksen viser produksjonsbasert co2-utslipp målt som billioner av tonn. Den horisontale aksen viser reelt BNP som trillioner av dollar målt i faste 2011 priser. Grafen antyder en positiv sammenheng mellom co2-utslipp og BNP, særlig for Kina, USA og India. 
+
+På figuren ser man at Kina sin helning er positiv og bratt, og at Kina sine klimagassutslipp i perioden 1850-2021 har vokst nesten tilsvarende deres økonomiske vekst. For USA derimot er den positive helningen mye slakere. Fra grafen kan man se at til tross for relativ lik BNP vekst, har deres produksjonsbaserte co2-utslipp vokst betraktelig mindre enn for Kina. Det antyder at deres økonomier er svært forskjellige. Antageligvis er det forskjeller i; hvor karbonintensive deres industrier er, i deres tilgang på teknologi som er mer energieffektiv og
+hvilke energikilder som brukes. Trolig er det også forskjeller mellom landene i deres insentiver til å føre en bærekraftig økonomisk utvikling. 
+
+Helningen til India antyder også positiv sammenheng mellom landets økonomiske vekst og deres produksjonsbaserte co2-utslipp. Det er først i nyere tider India har opplevd en sterk økonomisk vekst. Landet har dermed ikke hatt like stor vekst i BNP- og utslippsstørrelse som Kina og USA, slik man ser på grafen. Videre kan man se at Indias helning er slakere, hvilket innebærer at den mengden som co2-utslippene har økt med, etter hvert som BNP har økt, er lavere for India i forhold.
+
+Når det kommer til variasjoner innad landene er det USA som utmerker seg. USA sin helning på grafen er positiv og mer markant i begynnelsen, men demper seg etter hvert før stigningen helt på slutten ser ut til å være negativ.  For Kina og India derimot er observasjonene mer konsistente. Dermed kan det se ut som at USA har foretatt endringer i produksjonen for å redusere klimagassutslippene.
+
+Også for Japan og Tyskland ser det ut til å være en positiv sammenheng mellom variablene. Derimot er det vanskelig se å tydelige tendenser for disse to landene ut ifra grafen, da deres BNP størrelse og utslippsstørrelse er langt mindre enn landene de sammenlignes med. Det optimale ville vært å fokusere kun på Tyskland, Japan og India i en figur, slik at man får strekket ut observasjonene. Da vil det være lettere å se variasjonen og spredningen i dataen. Slik som dataen er visualisert ovenfor er det vanskelig å se hvordan observasjonene har lagt seg, da et område er høy konsentrert av observasjoner og mange av de har lagt seg oppå hverandre. Derimot får figuren frem de store forskjellene i utslipp og BNP mellom landene\]*
+
+### Oppgave Ib
+
+Vi betrakter nå et normalisert mål på sammenhengen CO2-utslipp og inntekt. La $CO2_{t}$ og $BNP_{t}$ være henholdsvis årlige utslipp av CO2 og brutto nasjonalprodukt i år $t$. Vi måler $CO2_{t}$ i kilogram og $BNP_{t}$ i kjøpekraftjusterte USD ved faste 2011-priser. Vi kan definere karbonintensiteten i produksjon som $CI_{t}=CO{2}_{t}/BNP_{t}$, altså antall kilogram CO2 per USD i verdiskapning.
+
+Lag en figur som viser karbonintensiteten $CI_{t}$ til de fem største økonomiene (navnene er lagret i variabelen `list` over) fra 1850 til 2021. Sammenlign $CI_{t}$ med helningen fra figuren i oppgave Ia. Gi en fullstendig og nøyaktig beskrivelse av figuren. Drøft minst to forhold som du tror kan være av avgjørende betydningen for å forklare variasjonen innad og mellom land.
+
+```{r}
+# Løs oppgave Ib her
+library(scales)
+library(ggthemes)
+df %>% 
+  filter(country %in% list, 
+         year >= 1850, 
+         year <= 2021) %>% 
+  mutate(co2 = co2*10^9, CI = co2/gdp) %>% 
+  ggplot(aes(x = year, y = CI, color = country)) +
+  geom_line(size = 1) +
+  labs(title = "Figur 2: Utvikling i karbonintensitet mellom årene 1850-2021", 
+       x = "", y = "Karbonintensitet", color = "Land") +
+  theme_fivethirtyeight() +
+  theme(plot.title = element_text(face="bold", size=12))
+        
+```
+
+*\[Figur 2 gir oversikt over, og sammenligner utviklingen i karbonintensitet i perioden 1850-2021, for fem av verdenens største økonomier. Karbonintensiteten vises på den vertikale aksen, og år vises på den horisontale aksen. Karbonintensiteten er definert som antall kg co2 som slippes ut per USD i verdiskapning, og indikerer dermed hvor miljøskadelig produksjonen i landet er, uavhengig produksjonsstørrelse. 
+
+Få figuren ser man at karbonintensiteten for Tyskland og USA vokste raskt til de nådde et toppunkt mellom årene 1900-1950, og har i ettertid hatt en negativ utvikling. Det observeres lite variasjon mellom årene for begge landene, med unntak Tyskland i midten av 1900 tallet. For kina observeres utviklingen mye senere enn for de andre landene. Landets karbonintensitet vokser raskt til de når et toppunkt etter 1950, deretter beveger karbonintensiteten seg i en tilsynelatende negativ trend, med store periodevise variasjoner. I årene etter 2000, ser man at kina har desidert høyest karbonintensitet. For Japan og India har karbonintensiteten vært betraktelig lavere enn for de andre landene. India ser ut til å ha hatt en relativ konsistent og positiv utvikling. I motsetning til Japan der utviklingen har vært relativ flat store deler av 19 århundret, med variasjoner mellom årene. 
+
+Uansett, observeres store reduksjoner i karbonintensitet. Det antyder at flere store økonomier, går mot en bærekraftig økonomisk utvikling. 
+
+Variasjonene som observeres innad og mellom landene skyldes mange ulike forhold. For det første, industriell utvikling og økonomisk vekst. De ulike økonomiene ble industrialisert på ulike tidspunkt. Industrialiseringen resulterte i høyt forbruk av fossile brensler og dermed høye klimagassutslipp. Dermed ser man på grafen sterk vekst i karbonintensitet, ettersom landene ble industrialisert. Industrialiseringen medførte også en sterkere økonomisk vekst, som følge av økt effektivitet i produksjonen. Og dermed mer investering, som gjør at økonomien og utslippene har fortatte å vokse. Økonomisk vekst har også vært betydelig for landenes evne til å investere i grønn energi og karboneffektiv teknologi, hvilket kan være med på å forklare den negative utviklingen som observeres i nyere tid. 
+
+Andre forhold kan innebære økonomienes struktur og politikk. Med det menes at de forskjellige økonomiene sin verdiskapning gjøres opp av ulike sektorer, som i ulik grad er karbonintensive. Det er også relevant i hvilken grad økonomiene påvirkes av offentlige reguleringer. Økonomier som er høyere regulert vil i større grad måtte tilpasse seg bestemmelser for mer bærekraftig produksjon.\]*
+
+### Oppgave Ic
+
+Undersøk hvorvidt bruken av kull som energikilde kan forklare forskjellen i karbonintensitet mellom de fem største landene. Lag to figurer og 100-200 ord med tekst. Husk å gi en fullstendig og nøyaktig beskrivelse av figurene.
+
+**Figur 1**
+
+```{r}
+df %>% 
+  filter(country %in% list, 
+         year >= 1850, 
+         year <= 2021) %>% 
+  mutate(percentage_coalco2_of_totalco2 = coal_co2*100/co2) %>% 
+  #mutate(co2kg = co2*10^9, CI = co2kg/gdp) %>% 
+  ggplot(aes(y = percentage_coalco2_of_totalco2, x = year, color = country)) + 
+  geom_point() +
+  labs(title = "Figur 3: co2-utslipp fra kullforbrenning som andel av landets totale co2 utslipp", x = "", y = "", color = "Land") + 
+  scale_y_continuous(labels = scales::unit_format(unit = "%"))+
+  geom_smooth(se = FALSE) +
+  theme_fivethirtyeight() +
+  theme(plot.title = element_text(face="bold", size=11))
+  
+```
+
+***Figur 2***
+
+```{r}
+df %>% 
+  filter(country %in% list, 
+         year >= 1850, 
+         year <= 2021) %>% 
+  mutate(co2 = co2*10^9, CI = co2/gdp) %>% 
+  ggplot(aes(y = CI, x = log(coal_co2), color = country)) + 
+  geom_point() +
+  #geom_smooth(se = FALSE) +
+  labs(title = "Figur 4: Karbonintensitet & kullenergi", 
+       x = "co2-utslipp fra kullforbrenning", y = "karbonintensitet", 
+       color = "Land") +
+  theme_classic()+
+  theme(plot.title = element_text(face="bold", size=15), 
+        axis.text.y = element_text(size=8), 
+        axis.text.x = element_text(size=8),
+        axis.title.y = element_text(face="bold", size=10), 
+        axis.title.x = element_text(face="bold", size=10))
+```
+
+
+
+*\[Figur 3 viser hvor stor andel av landets totale co2-utslipp som kan tilskrives kullforbrenning, og hvordan denne andelen har utviklet seg i perioden 1850-2021. På den vertikale aksen er co2-utslipp fra kullforbrenning oppgitt som prosentandel av landets totale utslippsstørrelse. År vises på den horisontale aksen. Figur 4 viser sammenhengen mellom karbonintensitet og co2-utslipp fra kullforbrenning. Karbonintensiteten vises på den vertikale aksen, og co2-utslipp fra kullforbrenning i logaritmetisk skala på den horisontale aksen. 
+
+Fra figur 3 ser man at kullforbrenning i nyere tider står for en mindre andel av landenes totale utslippsstørrelse. Det innebærer at landene gjennom årene har gjort seg mindre avhengig av kull som energikilde, og har gått over til andre energikilder. Om man sammenligner figur 2 og 3, ser man at den negative utviklingen i co2-utslipp fra kullenergi som andel av landets totale utslippp (figur3), samsvarer med flere lands negative utviklingen i karbonintensitet (figur 2). Det indikerer at implementasjonen av andre energikilder i produksjonen har hatt betydning for hvor karbonintensiv produksjonen er. 
+
+Fra figur 4 ser man at høye observasjoner av karbonintensitet forekommer der co2-utslipp fra kullforbrenning også er høy. Derimot forekommer også observasjoner av lav karbonintensitet, til tross for høye verdier av co2-utslipp fra kullforbrenning. Altså antyder figurene at selv om kullforbrenning er en betydelig kilde til klimagassutslipp, så er ikke forholdet mellom kullforbrenning og karbonintensitet lineært. Det vil si at karbonintensiteten påvirkes av også andre forhold, slik som diskutert i tidligere oppgaver, som for eksempel teknologi, politikk og type sektorer som driver landets verdiskapning.\]*
+
+## II. Konsumbaserte CO2-utslipp
+
+I den foregående analysen har vi slått fast at Kina har høy karbonintensitet i produksjon og at kullforbrenning står for en høy andel av deres utslipp. I hvilken grad kan utslippene knyttes til eksportrettet produksjon? I dataene fra OWID har de variable som de kaller konsumbaserte utslipp, for eksempel variabelen `consumption_co2.`
+
+### Oppgave IIa
+
+Forklar hvordan konsumbaserte CO2-utslipp er konstruert og hvordan vi skal tolke den.
+
+*\[Konsumbaserte CO2-utslipp måler mengden CO2 som slippes ut som følge av et lands konsum av varer og tjenester. I datasettet er variabelen gitt som et lands produksjonbaserte CO2-utslipp, minus andelen CO2-utslipp som inngår i det landet eksporterer, pluss mengden CO2 som slippes ut i forbindelse med produksjon av varer landet importerer. Dersom et lands konsumbaserte utslipp er høyere enn landets produksjonbaserte utslipp, innebærer det at landet er nettoimportør av CO2. Å se på konsumbasert CO2-utslipp er nyttig i situasjoner der man ønsker et mer helhetlig bilde av et lands CO2-utslipp og økologiske fotavtrykk.\]*
+
+### Oppgave IIb
+
+Lag en figur som viser utviklingen av konsumbasert CO2 per person og totale, konsumbaserte utslipp. Gi en fullstendig og nøyaktig beskrivelse av figuren og forklar hva den viser.
+
+**Hint:** Hvis du bruker `geom_point()` så kan spesifisere én av variablene ved tilvalget `size` i `aes()`.
+
+```{r}
+# besvar oppgave IIb her
+library(ggthemes)
+df %>% 
+  filter(country %in% list, 
+         year >= 1990, 
+         year <= 2021) %>% 
+  ggplot(aes(y = consumption_co2, 
+             x = year, 
+             color = country, 
+             size = consumption_co2_per_capita))+
+  geom_point()+
+  scale_size_continuous(range = c(1,3), 
+                        name = "Målt per innbygger")+
+  geom_smooth(se = FALSE)+
+  labs(title = "Figur 5: Konsumbasert co2-utslipp for de fem største økonomiene", x = "", y = "co2-utslipp i millioner tonn", color = "Land")+ 
+  theme_classic() +
+  theme(plot.title = element_text(face="bold", size=12), 
+        axis.text.y = element_text(face = "bold", size=8), 
+        axis.text.x = element_text(face = "bold", size=8),
+        axis.title.y = element_text(face="bold", size=10))
+```
+
+*\[Figur 5 viser konsumbaserte co2-utslipp for verdens fem største økonomier, i perioden 1990-2021. Konsumbasert co2-utslipp vises som millioner av tonn på den vertikale aksen, med år identifisert på den horisontale aksen. Observasjonenes størrelse på grafen indikerer konsumbasert co2-utslipp målt som per innbygger. Grafen viser at USA og Kina er de to landende som står for desidert mest konsumbasert co2-utslipp, i forhold til Japan, India og Tyskland. Ser man på utslippsstørrelsen målt som per innbygger er USA størst, deretter Tyskland og Japan, så Kina og India. Altså er USA, samt Tyskland og Japan til tross for mindre totale konsumbasert utslipp sammenlignet med Kina, mer karbonintensiv i deres konsumeringsvaner. 
+
+I tillegg ser man at Kina og India har hatt en positiv utvikling i konsumbasert co2-utslipp, i motsetning til resten av landene, der utviklingen ser ut til å være negativ i slutten av perioden. For Kina og India skyldes dette trolig deres raske og nyere økonomiske vekst, som har medført økt kjøpekraft og dermed økt konsum. 
+
+Alt i alt, ser man fra figur 5 en tilsynelatende positiv sammenheng mellom økonomisk vekst og konsum, og dermed økt konsumbasert co2-utslipp. Likevel, gir utviklingen til Japan, USA og Tyskland, utrykk for at mer velutviklede økonomier klarer å gjøre bærekraftige endringer i sine konsumeringsvaner.\]*
+
+## III. Produksjon- og konsumbaserte utslipp
+
+Betrakt følgende figur, og gi en konkret forklaring på hva den viser.
+
+```{r}
+df %>%
+
+  filter(country %in% c(list)) %>% 
+
+  ggplot(aes(x=year, y=trade_co2_share, color = country)) %>%
+  
+  + xlim(1990,2021) %>%
+  
+  + geom_line(size = 1.5) %>%
+  
+  + geom_hline(yintercept=0) %>%
+  
+  + labs(x = "Year", y = "Traded CO2 share", title = "Figur 6: Traded CO2 as share of production-based emissions", subtitle = "CO2 embedded in trade. Share of production based emissions. Percent. 1950-2021.
+Positive (negative) value indicates net imports (export) of CO2 emissions.", color = "Country") %>%
+  
+  + theme_bw()
+```
+
+*\[Figur 6 viser utviklingen i co2-utslipp som inngår i handel, som andel av total produksjonsbasert co2-utslipp, gjennom perioden 1990-2021. På figuren vises andelen handlet co2-utslipp på den vertikale aksen, og år på den horisontale aksen. I handlet co2, inngår det landet både eksporter og importerer. Dermed indikerer positive verdier på den vertikale aksen at landet er en nettoimportør av co2, mens negative verdier indikerer at landet er en nettoeksportør. 
+
+Figuren viser at klimagassutslippene til Tyskland og Japan i gjeldende tidsperiode, i større grad er tilknyttet kjøp av andre lands varer og tjenester, enn det de selv produserer. Det motsatte er tilfellet for India og Kina. USA derimot er nettoeksportør i starten av beregningsperioden, men går over til å være nettoimportør av co2 i slutten 90-tallet. Dette kan skyldes at USA sin produksjon har blitt mindre karbonintensiv eller at landet har gått over til å importere mer karbonintensive varer enn det de eksporterer. 
+
+Ved å se på utviklingen i handlet co2 som andel av produksjonsbaserte utslipp, får man mer informasjon rundt ulike lands klimagassbidrag, og hvordan dette har endret seg over tid. En side ved åpen økonomi, er at produksjonen vil forflytte seg dit det er billigst å produsere. Dermed kan miljøpolitikk som gjør produksjonen dyrere føre til at det blir mer lønnsomt for land å importere fremfor og produsere karbonintensive varer. Dermed kan det ut ifra landets produksjonsbaserte utslipp, i tilfeller se ut som at landets miljøavtrykk bli mindre, når landet i stedet flytter sin karbonbelastning over på andre land.\]*
+
+
+
+
+
+
